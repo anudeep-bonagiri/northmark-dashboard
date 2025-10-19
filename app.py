@@ -16,7 +16,7 @@ except Exception:
     WeatherClient = None
 
 # Page setup
-st.set_page_config(page_title="Race Strategy Dashboard", layout="wide")
+st.set_page_config(page_title="Lyra", layout="wide")
 
 # Custom CSS for gradient theme and animations
 def get_css():
@@ -492,7 +492,7 @@ st.markdown(get_css(), unsafe_allow_html=True)
 st.markdown(create_background_elements(), unsafe_allow_html=True)
 
 # Main content
-st.markdown('<h1>Lyra: A Real-Time Race Strategy Dashboard</h1>', unsafe_allow_html=True)
+st.image('/Users/anudeepbonagiri/Desktop/hackTX v2.0/northmark-dashboard/lyra.png', caption=None, width=100)
 
 # AI Commentary System
 commentary_system = AICommentarySystem()
@@ -564,11 +564,6 @@ left_col, center_col, right_col = st.columns([1.2, 1.6, 1.2])
 with left_col:
     # Race Status (Track View)
     track_plot = render_track_panel()
-    
-    # Static Race Status Panel
-    st.markdown('<div class="panel"><div class="panel-title">RACE STATUS</div>', unsafe_allow_html=True)
-    race_status_placeholder = st.empty()
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # Live camera video placeholder (will be updated dynamically)
     video_widget = st.empty()
@@ -679,23 +674,7 @@ for i in range(len(df)):
     fig = create_track_plot(lap, laps, radius)
     track_plot.plotly_chart(fig, use_container_width=True)
     
-    # Update Race Status
-    race_status_placeholder.markdown(f"""
-    <div style="padding: 12px; text-align: center;">
-        <div style="font-family: 'Orbitron', monospace; color: #59e1c6; font-size: 24px; font-weight: 700; margin-bottom: 8px;">
-            LAP {lap}
-        </div>
-        <div style="font-family: 'Orbitron', monospace; color: #a8dadc; font-size: 14px; margin-bottom: 4px;">
-            Lap Time: <strong style="color: #f1faee;">{lap_time:.2f}s</strong>
-        </div>
-        <div style="font-family: 'Orbitron', monospace; color: #a8dadc; font-size: 14px; margin-bottom: 4px;">
-            Tire Wear: <strong style="color: #f1faee;">{tire_wear:.1f}%</strong>
-        </div>
-        <div style="font-family: 'Orbitron', monospace; color: #a8dadc; font-size: 14px;">
-            Fuel: <strong style="color: #f1faee;">{fuel:.1f}%</strong>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Race Status removed - track visualization only
 
     # Lap time trend
     fig2 = go.Figure()
@@ -725,15 +704,18 @@ for i in range(len(df)):
     
     decision_card.markdown(
         f"""
-        <div class="decision-card">
-            <h2 style="color:white; font-family: 'Orbitron', monospace; margin-bottom: 1rem;">{decision}</h2>
-            <p style="color:#f1faee; font-size: 1.1rem; margin: 0.5rem 0;">Lap: {lap}</p>
-            <p style="color:#a8dadc; font-size: 1rem; margin: 0.5rem 0;">Tire Wear: {tire_wear:.1f}%</p>
-            <div class="fuel-inline-container">
-                <span class="fuel-label">Fuel: {fuel:.1f}%</span>
-                <div class="fuel-icon-clean">
-                    <div class="fuel-level-clean {fuel_level_class}" style="height: {fuel_height}px;">
-                        <div class="fuel-ripple"></div>
+        <div class="panel">
+            <div class="panel-title">STRATEGY DECISION</div>
+            <div style="padding: 1rem; text-align: center;">
+                <h2 style="color:{color}; font-family: 'Orbitron', monospace; margin-bottom: 1rem; font-size: 1.5rem;">{decision}</h2>
+                <p style="color:#f1faee; font-size: 1.1rem; margin: 0.5rem 0;">Lap: {lap}</p>
+                <p style="color:#a8dadc; font-size: 1rem; margin: 0.5rem 0;">Tire Wear: {tire_wear:.1f}%</p>
+                <div class="fuel-inline-container" style="justify-content: center;">
+                    <span class="fuel-label">Fuel: {fuel:.1f}%</span>
+                    <div class="fuel-icon-clean">
+                        <div class="fuel-level-clean {fuel_level_class}" style="height: {fuel_height}px;">
+                            <div class="fuel-ripple"></div>
+                        </div>
                     </div>
                 </div>
             </div>
