@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 import base64
 from pathlib import Path
 from components import create_track_plot, render_track_panel, render_car_panel
+from ai_commentary import AICommentarySystem, create_commentary_interface, play_audio
 
 # Try to import WeatherClient (weather API wrapper). If unavailable, we'll fall back to a small mock.
 try:
@@ -493,6 +494,11 @@ st.markdown(create_background_elements(), unsafe_allow_html=True)
 # Main content
 st.markdown('<h1>Lyra: A Real-Time Race Strategy Dashboard</h1>', unsafe_allow_html=True)
 
+# AI Commentary System
+commentary_system = AICommentarySystem()
+gemini_key, elevenlabs_key, voice_id = create_commentary_interface()
+
+
 # Enable client-side drag/swap of panels (no external libs)
 st.markdown(
     """
@@ -558,6 +564,11 @@ left_col, center_col, right_col = st.columns([1.2, 1.6, 1.2])
 with left_col:
     # Race Status (Track View)
     track_plot = render_track_panel()
+    
+    # Static Race Status Panel
+    st.markdown('<div class="panel"><div class="panel-title">RACE STATUS</div>', unsafe_allow_html=True)
+    race_status_placeholder = st.empty()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Live camera video placeholder (will be updated dynamically)
     video_widget = st.empty()
@@ -569,12 +580,13 @@ with center_col:
     # Car visualization from Elements folder
     render_car_panel()
 
-    # Engine and Fuel panels under the car image (side-by-side like reference)
-    ef1, ef2 = st.columns(2)
-    with ef1:
-        st.markdown('<div class="panel"><div class="panel-title">ENGINE TEMP (C)</div><div class="panel-placeholder" style="min-height:100px;"></div></div>', unsafe_allow_html=True)
-    with ef2:
-        st.markdown('<div class="panel"><div class="panel-title">FUEL (%)</div><div class="panel-placeholder" style="min-height:100px;"></div></div>', unsafe_allow_html=True)
+    # Live Commentary button under the car image
+    st.markdown('<div class="panel"><div class="panel-title">AI COMMENTARY</div>', unsafe_allow_html=True)
+    
+    # Commentary button placeholder (will be updated in simulation loop)
+    commentary_button_placeholder = st.empty()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with right_col:
     # Strategy decision card sits at the top
@@ -666,6 +678,24 @@ for i in range(len(df)):
     # Track plot using component
     fig = create_track_plot(lap, laps, radius)
     track_plot.plotly_chart(fig, use_container_width=True)
+    
+    # Update Race Status
+    race_status_placeholder.markdown(f"""
+    <div style="padding: 12px; text-align: center;">
+        <div style="font-family: 'Orbitron', monospace; color: #59e1c6; font-size: 24px; font-weight: 700; margin-bottom: 8px;">
+            LAP {lap}
+        </div>
+        <div style="font-family: 'Orbitron', monospace; color: #a8dadc; font-size: 14px; margin-bottom: 4px;">
+            Lap Time: <strong style="color: #f1faee;">{lap_time:.2f}s</strong>
+        </div>
+        <div style="font-family: 'Orbitron', monospace; color: #a8dadc; font-size: 14px; margin-bottom: 4px;">
+            Tire Wear: <strong style="color: #f1faee;">{tire_wear:.1f}%</strong>
+        </div>
+        <div style="font-family: 'Orbitron', monospace; color: #a8dadc; font-size: 14px;">
+            Fuel: <strong style="color: #f1faee;">{fuel:.1f}%</strong>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Lap time trend
     fig2 = go.Figure()
@@ -711,6 +741,43 @@ for i in range(len(df)):
         """,
         unsafe_allow_html=True
     )
+    
+    # Store current race data in session state for commentary
+    st.session_state.current_lap = lap
+    st.session_state.current_lap_time = lap_time
+    st.session_state.current_tire_wear = tire_wear
+    st.session_state.current_fuel = fuel
+    st.session_state.current_decision = decision
+    st.session_state.current_weather = _cur.get('temp', 0) if '_cur' in locals() else 22.4
+    
+    # Update commentary button in the loop (no page refresh)
+    with commentary_button_placeholder.container():
+        if st.button("🎙️ Generate Live Commentary", help="Click to generate AI commentary for current race state", use_container_width=True, key=f"commentary_btn_{i}"):
+            if gemini_key and elevenlabs_key and gemini_key != "your_gemini_api_key_here" and elevenlabs_key != "your_elevenlabs_api_key_here":
+                # Get current race state from the simulation
+                current_stats = {
+                    'lap': lap,
+                    'lap_time': lap_time,
+                    'tire_wear': tire_wear,
+                    'fuel': fuel,
+                    'decision': decision,
+                    'weather': _cur.get('temp', 0) if '_cur' in locals() else 22.4
+                }
+                # Generate commentary text first
+                commentary_text = commentary_system.generate_commentary(current_stats)
+                if commentary_text and not commentary_text.startswith("Error"):
+                    # Display transcript
+                    st.markdown("**📝 Transcript:**")
+                    st.info(commentary_text)
+                    
+                    # Generate and play audio
+                    commentary_audio = commentary_system.text_to_speech(commentary_text)
+                    if commentary_audio:
+                        st.audio(commentary_audio, format="audio/mpeg", autoplay=True)
+                else:
+                    st.error("Failed to generate commentary text")
+            else:
+                st.warning("Please configure your API keys in the .env file!")
 
     # Video switching based on tire wear
     if tire_wear > 65 and tire_wear < 66:
