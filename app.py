@@ -48,15 +48,7 @@ def get_css():
     }
     
     /* Background elements container */
-    .background-elements {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        pointer-events: none;
-    }
+    
     
     /* Animated background elements */
     .bg-element {
@@ -359,6 +351,29 @@ def get_video_base64(video_path):
     with open(video_path, "rb") as video_file:
         return base64.b64encode(video_file.read()).decode()
 
+def render_video(video_path, widget):
+    """Render video in the given widget"""
+    try:
+        video_base64 = get_video_base64(video_path)
+        widget.markdown(f'''
+        <div class="panel" style="position: relative; z-index: 1000;">
+            <div class="panel-title">LIVE CAMERA</div>
+            <video width="100%" height="300" autoplay muted loop playsinline style="border-radius: 10px; object-fit: cover; position: relative; z-index: 1001; background: #000;">
+                <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        ''', unsafe_allow_html=True)
+    except Exception as e:
+        widget.markdown(f'''
+        <div class="panel" style="position: relative; z-index: 1000;">
+            <div class="panel-title">LIVE CAMERA</div>
+            <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: #000; border-radius: 10px; color: white;">
+                Video Error: {str(e)}
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+
 # Function to create background elements HTML
 def create_background_elements():
     elements_dir = Path("Elements")
@@ -458,27 +473,11 @@ with left_col:
     # Race Status (Track View)
     track_plot = render_track_panel()
 
-    # Live camera video (muted, looping, no controls)
-    try:
-        video_base64 = get_video_base64("F_Lap_Generation_Request.mp4")
-        st.markdown(f'''
-        <div class="panel" style="position: relative; z-index: 1000;">
-            <div class="panel-title">LIVE CAMERA</div>
-            <video width="100%" height="300" autoplay muted loop playsinline style="border-radius: 10px; object-fit: cover; position: relative; z-index: 1001; background: #000;">
-                <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </div>
-        ''', unsafe_allow_html=True)
-    except Exception as e:
-        st.markdown(f'''
-        <div class="panel" style="position: relative; z-index: 1000;">
-            <div class="panel-title">LIVE CAMERA</div>
-            <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: #000; border-radius: 10px; color: white;">
-                Video Error: {str(e)}
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
+    # Live camera video placeholder (will be updated dynamically)
+    video_widget = st.empty()
+    
+    # Initialize with default video
+    render_video("F_Lap_Generation_Request.mp4", video_widget)
 
 with center_col:
     # Car visualization from Elements folder
@@ -557,9 +556,10 @@ with right_col:
 
 # Function to make pit decision
 def get_decision(tire_wear, lap_delta):
-    if tire_wear > 65 or lap_delta > 0.6:
+    if tire_wear > 65 or lap_delta > 0.6:       
         return "PIT NOW", "red"
     elif tire_wear > 45:
+        
         return "Monitor Tires", "yellow"
     else:
         return "Stay Out", "green"
@@ -615,6 +615,14 @@ for i in range(len(df)):
                 """,
                 unsafe_allow_html=True
         )
+
+    # Video switching based on tire wear
+    if tire_wear > 65 and tire_wear < 66:
+        video_widget.empty()
+        render_video("Pit.mp4", video_widget)
+    #else:
+        ##video_widget.empty()
+        #render_video("F_Lap_Generation_Request.mp4", video_widget)
 
         # Update weather snapshot each loop to keep it fresh
     try:
