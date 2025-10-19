@@ -6,6 +6,7 @@ import datetime
 import plotly.graph_objects as go
 import base64
 from pathlib import Path
+from components import create_track_plot, render_track_panel, render_car_panel
 
 # Try to import WeatherClient (weather API wrapper). If unavailable, we'll fall back to a small mock.
 try:
@@ -245,34 +246,6 @@ def get_css():
         background: rgba(255,255,255,0.03);
     }
 
-    /* Car frame styling */
-    .car-frame {
-        position: relative;
-        border-radius: 14px;
-        padding: 4px; /* tighter frame so it hugs PNG better */
-        background: linear-gradient(180deg, rgba(106,49,160,0.16), rgba(25,25,112,0.12));
-        border: 2px solid rgba(138, 70, 210, 0.28);
-        box-shadow: inset 0 0 24px rgba(138,70,210,0.18), 0 10px 28px rgba(0,0,0,0.34);
-        min-height: 56vh; /* make panel longer */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .car-img { width: 100%; height: auto; object-fit: contain; display: block; max-height: 56vh; }
-
-    /* Reduce padding only for the car's panel wrapper */
-    .panel-car { padding: 0.35rem 0.5rem; }
-
-    /* Hotspot overlay on car image */
-    .hotspot { position: absolute; border-radius: 50%; border: 2px solid rgba(138,70,210,0.55); background: rgba(138,70,210,0.12); cursor: help; backdrop-filter: blur(1px); }
-    .hotspot:hover { box-shadow: 0 0 12px rgba(138,70,210,0.6); }
-    .hotspot .tooltip { position: absolute; left: 50%; top: -12px; transform: translate(-50%, -100%); background: rgba(10,10,30,0.9); color: #e4d9ff; padding: 6px 10px; border-radius: 8px; font-family: 'Orbitron', monospace; font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; border: 1px solid rgba(138,70,210,0.5); }
-    .hotspot:hover .tooltip { opacity: 1; }
-    /* Tire hotspot positions (tuned for Elements/Car.png) */
-    .hotspot-fr { width: 14%; aspect-ratio: 1 / 1; top: 7%; right: 23%; }
-    .hotspot-fl { width: 14%; aspect-ratio: 1 / 1; top: 7%; left: 23%; }
-    .hotspot-rr { width: 14%; aspect-ratio: 1 / 1; bottom: 12%; right: 23%; }
-    .hotspot-rl { width: 14%; aspect-ratio: 1 / 1; bottom: 12%; left: 23%; }
     
     /* Title styling */
     h1 {
@@ -472,38 +445,14 @@ left_col, center_col, right_col = st.columns([1.2, 1.6, 1.2])
 
 with left_col:
     # Race Status (Track View)
-    st.markdown('<div class="panel"><div class="panel-title">RACE STATUS</div>', unsafe_allow_html=True)
-    track_plot = st.empty()
-    st.markdown('</div>', unsafe_allow_html=True)
+    track_plot = render_track_panel()
 
     # Video placeholder (bigger and square: equal width/height)
     st.markdown('<div class="panel"><div class="panel-title">LIVE CAMERA</div><div class="panel-placeholder" style="min-height:300px; aspect-ratio: 1 / 1;"></div></div>', unsafe_allow_html=True)
 
 with center_col:
     # Car visualization from Elements folder
-    st.markdown('<div class="panel panel-car">', unsafe_allow_html=True)
-    car_path = Path("Elements") / "Car.png"
-    if not car_path.exists():
-        alt_path = Path("Elements") / "HackTX F-1 Car-Photoroom.png"
-        if alt_path.exists():
-            car_path = alt_path
-    if car_path.exists():
-        car_b64 = get_image_base64(car_path)
-        st.markdown(
-            f'''
-            <div class="car-frame">
-                <img class="car-img" src="data:image/png;base64,{car_b64}" alt="car"/>
-                <div class="hotspot hotspot-fl"><div class="tooltip">Front Left Tire</div></div>
-                <div class="hotspot hotspot-fr"><div class="tooltip">Front Right Tire</div></div>
-                <div class="hotspot hotspot-rl"><div class="tooltip">Rear Left Tire</div></div>
-                <div class="hotspot hotspot-rr"><div class="tooltip">Rear Right Tire</div></div>
-            </div>
-            ''',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown('<div class="panel-placeholder" style="min-height:420px;"></div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    render_car_panel()
 
     # Engine and Fuel panels under the car image (side-by-side like reference)
     ef1, ef2 = st.columns(2)
@@ -598,28 +547,8 @@ for i in range(len(df)):
     lap_delta = (lap_time - prev_lap_time) / prev_lap_time
     prev_lap_time = lap_time
 
-    # Compute position (simulate car moving in circle)
-    angle = (lap / laps) * 2 * np.pi
-    x = np.cos(angle) * radius
-    y = np.sin(angle) * radius
-
-    # Track plot
-    theta = np.linspace(0, 2 * np.pi, 200)
-    track_x = np.cos(theta) * radius
-    track_y = np.sin(theta) * radius
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=track_x, y=track_y, mode="lines", line=dict(color="#4ecdc4", width=3), name="Track"))
-    fig.add_trace(go.Scatter(x=[x], y=[y], mode="markers", marker=dict(size=25, color="#ff6b6b", line=dict(width=2, color="white")), name="Car"))
-    fig.update_layout(
-        height=260, 
-        margin=dict(l=10, r=10, t=10, b=10), 
-        xaxis=dict(visible=False), 
-        yaxis=dict(visible=False),
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(family="Orbitron, monospace", color="#f1faee")
-    )
+    # Track plot using component
+    fig = create_track_plot(lap, laps, radius)
     track_plot.plotly_chart(fig, use_container_width=True)
 
     # Lap time trend
