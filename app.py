@@ -566,7 +566,7 @@ for i in range(len(df)):
 
     # Lap time trend
     fig2 = go.Figure()
-    fig2.add_trace(go.Scatter(
+    fig2.add_trace(go.Scatter( 
         x=df["lap"][:i+1], 
         y=df["lap_time"][:i+1], 
         mode="lines+markers", 
