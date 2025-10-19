@@ -75,7 +75,7 @@ class AICommentarySystem:
             return None
             
         try:
-            url = f"https://api.elevenlabs.io/eleven_flash_v2_5/text-to-speech/{self.elevenlabs_voice_id}"
+            url = f"https://api.elevenlabs.io/v1/text-to-speech/{self.elevenlabs_voice_id}"
             
             headers = {
                 "Accept": "audio/mpeg",
