@@ -2,9 +2,16 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import time
+import datetime
 import plotly.graph_objects as go
 import base64
 from pathlib import Path
+
+# Try to import WeatherClient (weather API wrapper). If unavailable, we'll fall back to a small mock.
+try:
+    from weather import WeatherClient
+except Exception:
+    WeatherClient = None
 
 # Page setup
 st.set_page_config(page_title="Race Strategy Dashboard", layout="wide")
@@ -515,7 +522,58 @@ with right_col:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Weather section moved to right side
-    st.markdown('<div class="panel"><div class="panel-title">WEATHER</div><div class="panel-placeholder" style="min-height:120px;"></div></div>', unsafe_allow_html=True)
+    # Create an updatable placeholder for the weather panel
+    weather_widget = st.empty()
+
+    # Default coordinates (Austin, TX). Change to track coordinates if known.
+    _weather_lat, _weather_lon = 30.2672, -97.7431
+
+    # Instantiate WeatherClient if available (graceful fallback to mock data)
+    _wc = None
+    if WeatherClient:
+        try:
+            _wc = WeatherClient(selected_date=datetime.date.today().isoformat())
+        except Exception:
+            _wc = None
+
+    def _get_weather_snapshot():
+        """Return weather dict with either real data or a mock snapshot."""
+        if _wc:
+            try:
+                epochs = _wc.generate_target_epochs(1)
+                target_epoch = int(epochs[0])
+                res = _wc.get_weather_at_time(_weather_lat, _weather_lon, target_epoch)
+            except Exception as e:
+                res = {"error": "exception", "message": str(e)}
+        else:
+            # Mock data when WeatherClient / network isn't available
+            res = {"current": {"temp": 22.4, "humidity": 56.0, "wind_speed": 3.5, "wind_dir": 135.0, "precip": 0.0, "pressure": 1013.5}}
+        return res
+
+    # Initial render of the weather panel (will be updated inside simulation loop)
+    _res = _get_weather_snapshot()
+    if "error" in _res:
+        _body = f"<div class='panel'><div class='panel-title'>WEATHER</div><div class='panel-placeholder' style='min-height:120px;padding:12px;'>Error: {_res.get('message','unknown')}</div></div>"
+    else:
+        _cur = _res["current"]
+        _body = f'''
+        <div class='panel'>
+          <div class='panel-title'>WEATHER</div>
+          <div style="padding:12px; min-height:120px; display:flex; gap:12px; align-items:center;">
+            <div style="flex:0 0 110px; text-align:center;">
+              <div style="font-family: 'Orbitron', monospace; color:#59e1c6; font-size:48px; font-weight:700;">{_cur.get('temp', 0):.1f}°C</div>
+              <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:12px;">Current</div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:14px;">Humidity: <strong style='color:#f1faee'>{_cur.get('humidity', 0):.0f}%</strong></div>
+              <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:14px;">Wind: <strong style='color:#f1faee'>{_cur.get('wind_speed', 0):.1f} m/s</strong> @ {_cur.get('wind_dir', 0):.0f}°</div>
+              <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:14px;">Precip: <strong style='color:#f1faee'>{_cur.get('precip', 0):.1f} mm</strong></div>
+              <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:14px;">Pressure: <strong style='color:#f1faee'>{_cur.get('pressure', 0):.0f} hPa</strong></div>
+            </div>
+          </div>
+        </div>
+        '''
+    weather_widget.markdown(_body, unsafe_allow_html=True)
 
 
 # Function to make pit decision
@@ -585,19 +643,47 @@ for i in range(len(df)):
         yaxis=dict(gridcolor='rgba(255,255,255,0.1)')
     )
     lap_chart.plotly_chart(fig2, use_container_width=True)
-
-    # Strategy decision
+        # Strategy decision
     decision, color = get_decision(tire_wear, lap_delta)
     decision_card.markdown(
-        f"""
-        <div class="decision-card">
-            <h2 style="color:white; font-family: 'Orbitron', monospace; margin-bottom: 1rem;">{decision}</h2>
-            <p style="color:#f1faee; font-size: 1.1rem; margin: 0.5rem 0;">Lap: {lap}</p>
-            <p style="color:#a8dadc; font-size: 1rem; margin: 0.5rem 0;">Tire Wear: {tire_wear:.1f}%</p>
-            <p style="color:#a8dadc; font-size: 1rem; margin: 0.5rem 0;">Fuel: {fuel:.1f}%</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+                f"""
+                <div class="decision-card">
+                        <h2 style="color:white; font-family: 'Orbitron', monospace; margin-bottom: 1rem;">{decision}</h2>
+                        <p style="color:#f1faee; font-size: 1.1rem; margin: 0.5rem 0;">Lap: {lap}</p>
+                        <p style="color:#a8dadc; font-size: 1rem; margin: 0.5rem 0;">Tire Wear: {tire_wear:.1f}%</p>
+                        <p style="color:#a8dadc; font-size: 1rem; margin: 0.5rem 0;">Fuel: {fuel:.1f}%</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+        )
+
+        # Update weather snapshot each loop to keep it fresh
+    try:
+                _res = _get_weather_snapshot()
+                if "error" in _res:
+                        _body = f"<div class='panel'><div class='panel-title'>WEATHER</div><div class='panel-placeholder' style='min-height:120px;padding:12px;'>Error: {_res.get('message','unknown')}</div></div>"
+                else:
+                        _cur = _res["current"]
+                        _body = f'''
+                        <div class='panel'>
+                            <div class='panel-title'>WEATHER</div>
+                            <div style="padding:12px; min-height:120px; display:flex; gap:12px; align-items:center;">
+                                <div style="flex:0 0 110px; text-align:center;">
+                                    <div style="font-family: 'Orbitron', monospace; color:#59e1c6; font-size:48px; font-weight:700;">{_cur.get('temp', 0):.1f}°C</div>
+                                    <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:12px;">Current</div>
+                                </div>
+                                <div style="flex:1;">
+                                    <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:14px;">Humidity: <strong style='color:#f1faee'>{_cur.get('humidity', 0):.0f}%</strong></div>
+                                    <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:14px;">Wind: <strong style='color:#f1faee'>{_cur.get('wind_speed', 0):.1f} m/s</strong> @ {_cur.get('wind_dir', 0):.0f}°</div>
+                                    <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:14px;">Precip: <strong style='color:#f1faee'>{_cur.get('precip', 0):.1f} mm</strong></div>
+                                    <div style="font-family: 'Orbitron', monospace; color:#a8dadc; font-size:14px;">Pressure: <strong style='color:#f1faee'>{_cur.get('pressure', 0):.0f} hPa</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                        '''
+                weather_widget.markdown(_body, unsafe_allow_html=True)
+    except Exception:
+                # Swallow rendering errors to avoid breaking simulation loop
+                pass
 
     time.sleep(update_interval)
