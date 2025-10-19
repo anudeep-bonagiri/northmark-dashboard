@@ -492,7 +492,19 @@ st.markdown(get_css(), unsafe_allow_html=True)
 st.markdown(create_background_elements(), unsafe_allow_html=True)
 
 # Main content
-st.image('/Users/anudeepbonagiri/Desktop/hackTX v2.0/northmark-dashboard/lyra.png', caption=None, width=100)
+#st.image('/Users/anudeepbonagiri/Desktop/hackTX v2.0/northmark-dashboard/lyra.png', caption=None, width=100)
+st.markdown(
+    """
+    <div style="text-align: center;">
+        <img src="data:image/png;base64,{}" width="167">
+    </div>
+    """.format(
+        # Convert your local image file to a base64 string
+        # so it can be embedded directly into the HTML
+        base64.b64encode(open('/Users/anudeepbonagiri/Desktop/hackTX v2.0/northmark-dashboard/lyra.png', 'rb').read()).decode()
+    ),
+    unsafe_allow_html=True
+)
 
 # AI Commentary System
 commentary_system = AICommentarySystem()
