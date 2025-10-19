@@ -752,32 +752,71 @@ for i in range(len(df)):
     
     # Update commentary button in the loop (no page refresh)
     with commentary_button_placeholder.container():
-        if st.button("🎙️ Generate Live Commentary", help="Click to generate AI commentary for current race state", use_container_width=True, key=f"commentary_btn_{i}"):
-            if gemini_key and elevenlabs_key and gemini_key != "your_gemini_api_key_here" and elevenlabs_key != "your_elevenlabs_api_key_here":
-                # Get current race state from the simulation
-                current_stats = {
-                    'lap': lap,
-                    'lap_time': lap_time,
-                    'tire_wear': tire_wear,
-                    'fuel': fuel,
-                    'decision': decision,
-                    'weather': _cur.get('temp', 0) if '_cur' in locals() else 22.4
-                }
-                # Generate commentary text first
-                commentary_text = commentary_system.generate_commentary(current_stats)
-                if commentary_text and not commentary_text.startswith("Error"):
-                    # Display transcript
-                    st.markdown("**📝 Transcript:**")
-                    st.info(commentary_text)
+        # Initialize session state for commentary if not exists
+        if 'commentary_generated' not in st.session_state:
+            st.session_state.commentary_generated = False
+        if 'commentary_text' not in st.session_state:
+            st.session_state.commentary_text = ""
+        if 'commentary_audio' not in st.session_state:
+            st.session_state.commentary_audio = None
+        if 'show_commentary' not in st.session_state:
+            st.session_state.show_commentary = False
+            
+        # Create columns for button and status
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            if st.button("🎙️ Generate Live Commentary", help="Click to generate AI commentary for current race state", use_container_width=True, key=f"commentary_btn_{i}"):
+                if gemini_key and elevenlabs_key and gemini_key != "your_gemini_api_key_here" and elevenlabs_key != "your_elevenlabs_api_key_here":
+                    # Store current race state for async processing
+                    st.session_state.current_race_stats = {
+                        'lap': lap,
+                        'lap_time': lap_time,
+                        'tire_wear': tire_wear,
+                        'fuel': fuel,
+                        'decision': decision,
+                        'weather': _cur.get('temp', 0) if '_cur' in locals() else 22.4
+                    }
                     
-                    # Generate and play audio
-                    commentary_audio = commentary_system.text_to_speech(commentary_text)
-                    if commentary_audio:
-                        st.audio(commentary_audio, format="audio/mpeg", autoplay=True)
+                    # Generate commentary without blocking
+                    with st.spinner("Generating commentary..."):
+                        commentary_text = commentary_system.generate_commentary(st.session_state.current_race_stats)
+                        if commentary_text and not commentary_text.startswith("Error"):
+                            st.session_state.commentary_text = commentary_text
+                            
+                            # Generate audio
+                            commentary_audio = commentary_system.text_to_speech(commentary_text)
+                            if commentary_audio:
+                                st.session_state.commentary_audio = commentary_audio
+                            
+                            st.session_state.commentary_generated = True
+                            st.session_state.show_commentary = True
+                            st.rerun()
+                        else:
+                            st.error("Failed to generate commentary text")
                 else:
-                    st.error("Failed to generate commentary text")
-            else:
-                st.warning("Please configure your API keys in the .env file!")
+                    st.warning("Please configure your API keys in the .env file!")
+        
+        with col2:
+            if st.session_state.get('show_commentary', False):
+                if st.button("❌", help="Close commentary", key=f"close_commentary_{i}"):
+                    st.session_state.show_commentary = False
+                    st.session_state.commentary_generated = False
+                    st.rerun()
+        
+        # Display commentary if generated
+        if st.session_state.get('show_commentary', False) and st.session_state.get('commentary_text', ""):
+            st.markdown("**📝 Live Commentary:**")
+            with st.container():
+                st.info(st.session_state.commentary_text)
+                
+                if st.session_state.get('commentary_audio'):
+                    st.audio(st.session_state.commentary_audio, format="audio/mpeg")
+                    
+                # Auto-hide after showing (optional)
+                if st.button("🔄 Generate New Commentary", key=f"refresh_commentary_{i}"):
+                    st.session_state.show_commentary = False
+                    st.session_state.commentary_generated = False
 
     # Video switching based on tire wear
     if tire_wear > 65 and tire_wear < 66:
