@@ -48,15 +48,7 @@ def get_css():
     }
     
     /* Background elements container */
-    .background-elements {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        pointer-events: none;
-    }
+    
     
     /* Animated background elements */
     .bg-element {
@@ -68,73 +60,73 @@ def get_css():
     }
     
     .sun {
-        width: 180px;
-        height: 180px;
-        top: 10%;
-        right: 15%;
+        width: 200px;
+        height: 200px;
+        top: 2%;
+        right: 2%;
         animation-name: orbit;
         animation-duration: 30s;
     }
     
     .planet {
-        width: 140px;
-        height: 140px;
-        top: 20%;
-        left: 10%;
+        width: 160px;
+        height: 160px;
+        top: 12%;
+        left: 1%;
         animation-name: float;
         animation-duration: 25s;
     }
     
     .moon {
-        width: 60px;
-        height: 60px;
-        top: 30%;
-        right: 25%;
+        width: 70px;
+        height: 70px;
+        top: 20%;
+        right: 12%;
         animation-name: drift;
         animation-duration: 18s;
     }
     
     .star8 {
-        width: 50px;
-        height: 50px;
-        top: 15%;
-        left: 20%;
+        width: 60px;
+        height: 60px;
+        top: 5%;
+        left: 12%;
         animation-name: twinkle;
         animation-duration: 3s;
     }
     
     .spark {
-        width: 35px;
-        height: 35px;
-        top: 40%;
-        right: 30%;
+        width: 45px;
+        height: 45px;
+        top: 30%;
+        right: 20%;
         animation-name: sparkle;
         animation-duration: 2s;
     }
     
     .spiral-galaxy {
-        width: 160px;
-        height: 160px;
-        bottom: 20%;
-        left: 15%;
+        width: 180px;
+        height: 180px;
+        bottom: 5%;
+        left: 2%;
         animation-name: rotate;
         animation-duration: 40s;
     }
     
     .orbit-rings {
-        width: 200px;
-        height: 200px;
-        bottom: 30%;
-        right: 20%;
+        width: 220px;
+        height: 220px;
+        bottom: 15%;
+        right: 2%;
         animation-name: orbitRings;
         animation-duration: 35s;
     }
     
     .planet-ring {
-        width: 130px;
-        height: 130px;
-        top: 50%;
-        left: 5%;
+        width: 150px;
+        height: 150px;
+        top: 40%;
+        left: 0%;
         animation-name: rotate;
         animation-duration: 22s;
     }
@@ -142,23 +134,23 @@ def get_css():
     /* Animation keyframes */
     @keyframes orbit {
         0% { transform: translate(0, 0) rotate(0deg); }
-        25% { transform: translate(50px, -30px) rotate(90deg); }
-        50% { transform: translate(100px, 0) rotate(180deg); }
-        75% { transform: translate(50px, 30px) rotate(270deg); }
+        25% { transform: translate(80px, -50px) rotate(90deg); }
+        50% { transform: translate(150px, 0) rotate(180deg); }
+        75% { transform: translate(80px, 50px) rotate(270deg); }
         100% { transform: translate(0, 0) rotate(360deg); }
     }
     
     @keyframes float {
         0%, 100% { transform: translateY(0px) rotate(0deg); }
-        33% { transform: translateY(-20px) rotate(120deg); }
-        66% { transform: translateY(10px) rotate(240deg); }
+        33% { transform: translateY(-40px) rotate(120deg); }
+        66% { transform: translateY(20px) rotate(240deg); }
     }
     
     @keyframes drift {
         0% { transform: translateX(0px) translateY(0px); }
-        25% { transform: translateX(30px) translateY(-15px); }
-        50% { transform: translateX(60px) translateY(0px); }
-        75% { transform: translateX(30px) translateY(15px); }
+        25% { transform: translateX(60px) translateY(-30px); }
+        50% { transform: translateX(120px) translateY(0px); }
+        75% { transform: translateX(60px) translateY(30px); }
         100% { transform: translateX(0px) translateY(0px); }
     }
     
@@ -179,9 +171,11 @@ def get_css():
     }
     
     @keyframes orbitRings {
-        0% { transform: rotate(0deg) scale(1); }
-        50% { transform: rotate(180deg) scale(1.1); }
-        100% { transform: rotate(360deg) scale(1); }
+        0% { transform: rotate(0deg) scale(1) translate(0, 0); }
+        25% { transform: rotate(90deg) scale(1.1) translate(40px, -20px); }
+        50% { transform: rotate(180deg) scale(1.2) translate(80px, 0); }
+        75% { transform: rotate(270deg) scale(1.1) translate(40px, 20px); }
+        100% { transform: rotate(360deg) scale(1) translate(0, 0); }
     }
     
     /* Main content styling */
