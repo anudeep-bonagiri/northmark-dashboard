@@ -48,7 +48,15 @@ def get_css():
     }
     
     /* Background elements container */
-    
+    .background-elements {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+    }
     
     /* Animated background elements */
     .bg-element {
@@ -60,73 +68,73 @@ def get_css():
     }
     
     .sun {
-        width: 200px;
-        height: 200px;
-        top: 2%;
-        right: 2%;
+        width: 180px;
+        height: 180px;
+        top: 10%;
+        right: 15%;
         animation-name: orbit;
         animation-duration: 30s;
     }
     
     .planet {
-        width: 160px;
-        height: 160px;
-        top: 12%;
-        left: 1%;
+        width: 140px;
+        height: 140px;
+        top: 20%;
+        left: 10%;
         animation-name: float;
         animation-duration: 25s;
     }
     
     .moon {
-        width: 70px;
-        height: 70px;
-        top: 20%;
-        right: 12%;
+        width: 60px;
+        height: 60px;
+        top: 30%;
+        right: 25%;
         animation-name: drift;
         animation-duration: 18s;
     }
     
     .star8 {
-        width: 60px;
-        height: 60px;
-        top: 5%;
-        left: 12%;
+        width: 50px;
+        height: 50px;
+        top: 15%;
+        left: 20%;
         animation-name: twinkle;
         animation-duration: 3s;
     }
     
     .spark {
-        width: 45px;
-        height: 45px;
-        top: 30%;
-        right: 20%;
+        width: 35px;
+        height: 35px;
+        top: 40%;
+        right: 30%;
         animation-name: sparkle;
         animation-duration: 2s;
     }
     
     .spiral-galaxy {
-        width: 180px;
-        height: 180px;
-        bottom: 5%;
-        left: 2%;
+        width: 160px;
+        height: 160px;
+        bottom: 20%;
+        left: 15%;
         animation-name: rotate;
         animation-duration: 40s;
     }
     
     .orbit-rings {
-        width: 220px;
-        height: 220px;
-        bottom: 15%;
-        right: 2%;
+        width: 200px;
+        height: 200px;
+        bottom: 30%;
+        right: 20%;
         animation-name: orbitRings;
         animation-duration: 35s;
     }
     
     .planet-ring {
-        width: 150px;
-        height: 150px;
-        top: 40%;
-        left: 0%;
+        width: 130px;
+        height: 130px;
+        top: 50%;
+        left: 5%;
         animation-name: rotate;
         animation-duration: 22s;
     }
@@ -134,23 +142,23 @@ def get_css():
     /* Animation keyframes */
     @keyframes orbit {
         0% { transform: translate(0, 0) rotate(0deg); }
-        25% { transform: translate(80px, -50px) rotate(90deg); }
-        50% { transform: translate(150px, 0) rotate(180deg); }
-        75% { transform: translate(80px, 50px) rotate(270deg); }
+        25% { transform: translate(50px, -30px) rotate(90deg); }
+        50% { transform: translate(100px, 0) rotate(180deg); }
+        75% { transform: translate(50px, 30px) rotate(270deg); }
         100% { transform: translate(0, 0) rotate(360deg); }
     }
     
     @keyframes float {
         0%, 100% { transform: translateY(0px) rotate(0deg); }
-        33% { transform: translateY(-40px) rotate(120deg); }
-        66% { transform: translateY(20px) rotate(240deg); }
+        33% { transform: translateY(-20px) rotate(120deg); }
+        66% { transform: translateY(10px) rotate(240deg); }
     }
     
     @keyframes drift {
         0% { transform: translateX(0px) translateY(0px); }
-        25% { transform: translateX(60px) translateY(-30px); }
-        50% { transform: translateX(120px) translateY(0px); }
-        75% { transform: translateX(60px) translateY(30px); }
+        25% { transform: translateX(30px) translateY(-15px); }
+        50% { transform: translateX(60px) translateY(0px); }
+        75% { transform: translateX(30px) translateY(15px); }
         100% { transform: translateX(0px) translateY(0px); }
     }
     
@@ -171,11 +179,9 @@ def get_css():
     }
     
     @keyframes orbitRings {
-        0% { transform: rotate(0deg) scale(1) translate(0, 0); }
-        25% { transform: rotate(90deg) scale(1.1) translate(40px, -20px); }
-        50% { transform: rotate(180deg) scale(1.2) translate(80px, 0); }
-        75% { transform: rotate(270deg) scale(1.1) translate(40px, 20px); }
-        100% { transform: rotate(360deg) scale(1) translate(0, 0); }
+        0% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.1); }
+        100% { transform: rotate(360deg) scale(1); }
     }
     
     /* Main content styling */
@@ -200,6 +206,13 @@ def get_css():
         overflow: auto;
         /* draggable via JS; no resize */
         cursor: move;
+        z-index: 10;
+    }
+    
+    /* Video panel specific styling */
+    .panel video {
+        z-index: 15;
+        position: relative;
     }
     .panel-title {
         font-family: 'Orbitron', monospace;
@@ -341,6 +354,11 @@ def get_image_base64(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
+# Function to encode video to base64
+def get_video_base64(video_path):
+    with open(video_path, "rb") as video_file:
+        return base64.b64encode(video_file.read()).decode()
+
 # Function to create background elements HTML
 def create_background_elements():
     elements_dir = Path("Elements")
@@ -372,8 +390,7 @@ st.markdown(get_css(), unsafe_allow_html=True)
 st.markdown(create_background_elements(), unsafe_allow_html=True)
 
 # Main content
-st.markdown('<h1>Real-Time Race Strategy Dashboard</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Simulating live race telemetry and pit strategy logic.</p>', unsafe_allow_html=True)
+st.markdown('<h1>Lyra: A Real-Time Race Strategy Dashboard</h1>', unsafe_allow_html=True)
 
 # Enable client-side drag/swap of panels (no external libs)
 st.markdown(
@@ -441,8 +458,27 @@ with left_col:
     # Race Status (Track View)
     track_plot = render_track_panel()
 
-    # Video placeholder (bigger and square: equal width/height)
-    st.markdown('<div class="panel"><div class="panel-title">LIVE CAMERA</div><div class="panel-placeholder" style="min-height:300px; aspect-ratio: 1 / 1;"></div></div>', unsafe_allow_html=True)
+    # Live camera video (muted, looping, no controls)
+    try:
+        video_base64 = get_video_base64("F_Lap_Generation_Request.mp4")
+        st.markdown(f'''
+        <div class="panel" style="position: relative; z-index: 1000;">
+            <div class="panel-title">LIVE CAMERA</div>
+            <video width="100%" height="300" autoplay muted loop playsinline style="border-radius: 10px; object-fit: cover; position: relative; z-index: 1001; background: #000;">
+                <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        ''', unsafe_allow_html=True)
+    except Exception as e:
+        st.markdown(f'''
+        <div class="panel" style="position: relative; z-index: 1000;">
+            <div class="panel-title">LIVE CAMERA</div>
+            <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: #000; border-radius: 10px; color: white;">
+                Video Error: {str(e)}
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
 
 with center_col:
     # Car visualization from Elements folder
