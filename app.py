@@ -342,6 +342,92 @@ def get_css():
         margin: 0.3rem 0 !important;
     }
     
+    /* Clean inline fuel icon */
+    .fuel-inline-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0.5rem 0;
+    }
+    
+    .fuel-icon-clean {
+        width: 28px;
+        height: 36px;
+        position: relative;
+        background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+        border: 1.5px solid #a8dadc;
+        border-radius: 6px 6px 8px 8px;
+        margin-left: 12px;
+        overflow: hidden;
+        box-shadow: 0 0 8px rgba(168,218,220,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .fuel-icon-clean::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        right: -8px;
+        width: 12px;
+        height: 8px;
+        background: #a8dadc;
+        border-radius: 0 3px 3px 0;
+        box-shadow: 0 0 4px rgba(168,218,220,0.3);
+    }
+    
+    .fuel-level-clean {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        transition: height 0.6s ease-out;
+        border-radius: 0 0 6px 6px;
+    }
+    
+    .fuel-level-clean.high {
+        background: linear-gradient(180deg, #4ecdc4 0%, #96ceb4 100%);
+        box-shadow: 0 0 8px rgba(78,205,196,0.4);
+    }
+    
+    .fuel-level-clean.medium {
+        background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%);
+        box-shadow: 0 0 8px rgba(241,196,15,0.4);
+    }
+    
+    .fuel-level-clean.low {
+        background: linear-gradient(180deg, #ff6b6b 0%, #e74c3c 100%);
+        box-shadow: 0 0 8px rgba(255,107,107,0.5);
+        animation: lowFuelPulse 1.5s ease-in-out infinite alternate;
+    }
+    
+    @keyframes lowFuelPulse {
+        0% { box-shadow: 0 0 8px rgba(255,107,107,0.5); }
+        100% { box-shadow: 0 0 15px rgba(255,107,107,0.8); }
+    }
+    
+    .fuel-ripple {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
+        animation: fuelRipple 2.5s linear infinite;
+        opacity: 0.6;
+    }
+    
+    @keyframes fuelRipple {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .fuel-label {
+        color: #a8dadc;
+        font-size: 1rem;
+        margin-right: 8px;
+        font-family: 'Orbitron', monospace;
+    }
+    
     /* Custom scrollbar */
     ::-webkit-scrollbar {
         width: 8px;
@@ -586,15 +672,25 @@ for i in range(len(df)):
     )
     lap_chart.plotly_chart(fig2, use_container_width=True)
 
-    # Strategy decision
+    # Strategy decision with inline fuel icon
     decision, color = get_decision(tire_wear, lap_delta)
+    fuel_level_class = "high" if fuel > 60 else "medium" if fuel > 25 else "low"
+    fuel_height = max(3, (fuel / 100) * 32)  # 32px is the usable height inside the icon
+    
     decision_card.markdown(
         f"""
         <div class="decision-card">
             <h2 style="color:white; font-family: 'Orbitron', monospace; margin-bottom: 1rem;">{decision}</h2>
             <p style="color:#f1faee; font-size: 1.1rem; margin: 0.5rem 0;">Lap: {lap}</p>
             <p style="color:#a8dadc; font-size: 1rem; margin: 0.5rem 0;">Tire Wear: {tire_wear:.1f}%</p>
-            <p style="color:#a8dadc; font-size: 1rem; margin: 0.5rem 0;">Fuel: {fuel:.1f}%</p>
+            <div class="fuel-inline-container">
+                <span class="fuel-label">Fuel: {fuel:.1f}%</span>
+                <div class="fuel-icon-clean">
+                    <div class="fuel-level-clean {fuel_level_class}" style="height: {fuel_height}px;">
+                        <div class="fuel-ripple"></div>
+                    </div>
+                </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True
