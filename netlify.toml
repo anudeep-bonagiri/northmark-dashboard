@@ -1,0 +1,9 @@
+[build]
+  publish = "public"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-streamlit-hostname.example.com/:splat"
+  status = 200
+
+

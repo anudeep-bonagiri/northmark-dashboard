@@ -16,7 +16,7 @@ except Exception:
     WeatherClient = None
 
 # Page setup
-st.set_page_config(page_title="Lyra", layout="wide")
+st.set_page_config(page_title="Lyra", layout="wide", page_icon="components/favicon.ico")
 
 # Custom CSS for gradient theme and animations
 def get_css():

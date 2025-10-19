@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lyra Dashboard</title>
+    <link rel="icon" href="../components/favicon.ico" />
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        background: #0d1b2a;
+      }
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        padding: 8px 12px;
+        color: #59e1c6;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      }
+      iframe {
+        border: 0;
+        width: 100%;
+        flex: 1 1 auto;
+      }
+      .notice { color: #a8dadc; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <strong>Lyra</strong>
+        <span class="notice">Loading dashboard...</span>
+      </header>
+      <!-- Replace the src below with your deployed Streamlit app URL -->
+      <iframe src="https://your-streamlit-hostname.example.com/" allow="autoplay; fullscreen"></iframe>
+    </div>
+  </body>
+  </html>
+
+
